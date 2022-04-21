@@ -1,0 +1,83 @@
+﻿@model SurveyDto
+
+@{
+    ViewData["Title"] = "Survey";
+}
+
+<script>
+
+    $(document).on('click', '#add-q', function (e) {
+        $.ajax({
+            url: '@Url.Action("DisplayNewQuizSet", "Survey")',
+            success: function (partialView) {
+                $('#qs-body').append(partialView);
+            }
+        });
+    });
+    $(document).on('click', '#save', function (e) {
+
+        var jsonObject = {
+            "Id" : $("#Id").val(),
+            "Title" : $("#Title").val(),
+            "Questions": []
+        };
+        debugger;
+        $('div#q-body.q-row').each(
+            function(index){
+                var row = $(this);
+                let id = 0;
+                if (row.find("#QId").val())
+                    id = parseInt(row.find("#QId").val());
+                jsonObject.Questions.push({
+                    "Id":id,
+                    "QuestionText" :row.find("#QuestionText").val(),
+                    "QType" :parseInt(row.find(".drp-type").val()) ,
+                    "AnswersText" :row.find("#AnswersText").val()
+                });
+            }
+        );
+
+        $.ajax({
+            url: '@Url.Action("Save")',
+            type: "POST",
+            data:  JSON.stringify(jsonObject),
+            contentType: "application/json; charset=utf-8",
+            dataType: "json",
+            error: function (response) {
+                alert(response);
+            },
+            success: function (response) {
+                alert(response.msg);
+                if (response.success)
+                    location.href = "/";
+            }
+        });
+    });
+
+
+</script>
+<form style="margin-top: 10px" method="post">
+    @Html.HiddenFor(x=> x.Id)
+    <button type="button" id="save" class="btn btn-primary">Save</button>
+    <button type="button" id="add-q" class="btn btn-info">Add Question</button>
+    @Html.ActionLink("Cancel", "Index", "Survey", null, new { @class = "btn btn-info" })
+    <div id="qs-body" style="padding: 5px">
+        <div class="row">
+            <div class="col">
+                @Html.TextBoxFor(x => x.Title, new { @class = "form-control", placeholder = "Survey Title" })
+            </div>
+        </div>
+
+        @if (Model.QuestionsCount == 0)
+        {
+            <div> @await Html.PartialAsync("_Question", new QuestionDto())</div>
+        }
+        else
+        {
+            foreach (var question in Model.Questions)
+            {
+                <div> @await Html.PartialAsync("_Question", question)</div>
+            }
+        }
+    </div>
+</form>

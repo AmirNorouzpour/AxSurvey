@@ -1,0 +1,99 @@
+﻿@using AxSurvey.Model.DomainModels
+@model SurveyDto
+<script>
+    $(document).on('click', '#save', function (e) {
+
+        var jsonObject = {
+            "Id" : $("#Id").val(),
+            "Questions": []
+        };
+
+        $('.q-row').each(
+            function(index){
+                var row = $(this);
+                let id = 0;
+                if (row.find("#QId").val())
+                    id = parseInt(row.find("#QId").val());
+                var chks = row.find("input[type=checkbox]");
+                var value = row.find("#AnswerValue").val();
+                if (!value)
+                    value = "";
+                if(chks.length>0){
+                    var chks = row.find("input[type=checkbox]:checked");
+                    chks.each(function() {
+                        debugger;
+                         value += $(this).val()+",";
+                      });
+                    value = value.slice(0, -1);
+                }
+                jsonObject.Questions.push({
+                    "Id":id,
+                    "Value" :value
+                });
+            }
+        );
+
+        debugger;
+        $.ajax({
+            url: '@Url.Action("SaveResult")',
+            type: "POST",
+            data:  JSON.stringify(jsonObject),
+            contentType: "application/json; charset=utf-8",
+            dataType: "json",
+            error: function (response) {
+                alert(response);
+            },
+            success: function (response) {
+                alert(response.msg);
+                if (response.success)
+                    location.href = "/";
+            }
+        });
+    });
+</script>
+@using (Html.BeginForm())
+{
+    @Html.Hidden("Id",Model.Id)
+    <div>@Model.Title Survey</div>
+    for (int i = 0; i < Model.Questions.Count(); i++)
+    {
+        var question = Model.Questions[i];
+        <div class="q-row">
+            <div style="color: dodgerblue;font-size: 18px ">@question.QuestionText</div>
+            @Html.Hidden("QId",question.Id)
+            @switch (question.QType)
+            {
+                case QuestionType.Text:
+                    <div style="margin-top:10px ">
+                        @Html.TextArea("AnswerValue", new { @class = "form-control view-answer", placeholder = "Answers", name = "an" })
+                    </div>
+                    break;
+                case QuestionType.Dropdown:
+                    <div style="margin-top:10px ">
+                        @Html.DropDownList("AnswerValue",  question.AnswersText.Split("\n",StringSplitOptions.RemoveEmptyEntries).Select((text, idx) => new  SelectListItem(text,idx.ToString())), new { @class = "form-control drp-type", name = "dr" })
+                    </div>
+                    break;
+                case QuestionType.Multiple:
+                    <div style="margin-top: 10px">
+                        @{
+                            var items = question.AnswersText.Split("\n", StringSplitOptions.RemoveEmptyEntries);
+                            @for (var index = 1; index <= items.Length; index++)
+                            {
+                                var item = items[index - 1];
+                                <div class="form-check">
+                                    <input class="form-check-input" type="checkbox" value="@index" id="AnswerValue_@index">
+                                    <label class="form-check-label" for="AnswerValue_@index">
+                                        @item
+                                    </label>
+                                </div>
+                            }
+                        }
+                    </div>
+                    break;
+                default:
+                    throw new ArgumentOutOfRangeException();
+            }
+        </div>
+    }
+    <div style="margin-top:10px"><input id="save" type="button" value="Submit" class="btn btn-outline-primary" /></div>
+}

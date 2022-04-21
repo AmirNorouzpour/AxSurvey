@@ -1,0 +1,36 @@
+﻿@using AxSurvey.Model.DomainModels
+@model QuestionDto
+<script>
+    $(document).on('change','.drp-type',function(){
+        if (this.value == 0) {
+            $(this).parent().next().hide();
+        } else {
+            $(this).parent().next().show();
+        }
+    });
+
+</script>
+
+<div class="q-row" id="q-body">
+    <div class="row">
+        <div class="col">
+            <div style="padding: 10px;" class="q-row">
+                @Html.Hidden("QId",Model.Id)
+                <div style="margin-top: 5px">
+                    @Html.TextBoxFor(x => x.QuestionText, new { @class = "form-control", placeholder = "Question Text", name = "qt" })
+                </div>
+                <div style="margin-top: 5px">
+                    @Html.DropDownListFor(x => x.QType, Html.GetEnumSelectList<QuestionType>(), new { @class = "form-control drp-type", name = "dr" })
+                </div>
+                @{
+                    var displayMode = (Model.HasTextualAnswer) ? "none" : "block";
+                    <div style="margin-top: 5px; display: @displayMode">
+                        <span style="color: gray; font-size: 12px">Write every Answer in one line of blow input </span>
+                        @Html.TextAreaFor(x => x.AnswersText, new { @class = "form-control", placeholder = "Answers", name = "an" })
+                    </div>
+                }
+            </div>
+
+        </div>
+    </div>
+</div>
